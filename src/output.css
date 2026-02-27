@@ -1,0 +1,14 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    min-height: 100vh;
+}
+
+body {
+    background: #4e4f4f;
+    background: linear-gradient(35deg, rgba(78, 79, 79, 1) 0%, rgba(0, 235, 252, 1) 50%, rgba(4, 36, 125, 1) 100%);
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    background-size: cover;
+}

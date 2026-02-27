@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Bootstrap CSS local -->
+    <link rel="stylesheet" href="styles/bootstrap.min.css">
+    <!-- CSS personalizado -->
+    <link rel="stylesheet" href="styles/main.css">
+    <title>YouTube Downloader</title>
+</head>
+
+<body>
+    <div class="container-fluid d-flex align-items-center justify-content-center min-vh-100">
+        <div class="col-md-8 col-lg-7">
+            <div class="card shadow">
+                <div class="card-header text-center bg-primary text-white position-relative">
+                    <h1 class="h4 mb-0 fw-bold">YouTube Downloader</h1>
+                    <!-- Botón cerrar aplicación -->
+                    <button type="button"
+                        class="btn-close btn-close-white position-absolute top-50 end-0 translate-middle-y me-3"
+                        id="closeApp" aria-label="Cerrar aplicación"></button>
+                </div>
+                <div class="card-body">
+                    <!-- Formulario de búsqueda -->
+                    <form id="searchForm">
+                        <div class="mb-3">
+                            <label for="url" class="form-label">
+                                <i class="bi bi-link-45deg"></i>
+                                Dirección de video:
+                            </label>
+                            <div class="input-group">
+                                <input type="url" class="form-control" id="url"
+                                    placeholder="https://www.youtube.com/watch?v=...">
+                                <button class="btn btn-outline-primary" type="submit">
+                                    <i class="bi bi-search"></i>
+                                    Buscar
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Card del video (inicialmente oculto) -->
+                    <div id="videoCard" class="d-none">
+                        <hr class="my-4">
+                        <div class="card">
+                            <div class="row g-0">
+                                <!-- Thumbnail del video -->
+                                <div class="col-md-4">
+                                    <img id="videoThumbnail"
+                                        src="https://via.placeholder.com/320x180/FF0000/FFFFFF?text=YouTube+Thumbnail"
+                                        class="img-fluid rounded-start w-100" alt="Video thumbnail"
+                                        style="height: 150px; object-fit: contain; background-color: #f8f9fa;">
+                                </div>
+
+                                <!-- Información y controles -->
+                                <div class="col-md-8">
+                                    <div class="card-body">
+                                        <h6 class="card-title" id="videoTitle">Título del video de YouTube</h6>
+                                        <p class="card-text">
+                                            <small class="text-muted" id="videoDuration">Duración: 10:35</small>
+                                        </p>
+                                        <p class="card-text">
+                                            <small class="text-muted" id="videoChannel">Canal: Ejemplo de Canal</small>
+                                        </p>
+
+                                        <!-- Controles de descarga -->
+                                        <div class="row g-2 align-items-end">
+                                            <div class="col-md-6">
+                                                <label for="downloadQuality" class="form-label small">
+                                                    <i class="bi bi-gear"></i>
+                                                    Calidad:
+                                                </label>
+                                                <select class="form-select form-select-sm" id="downloadQuality">
+                                                    <option value="">Cargando calidades...</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <button type="button" class="btn btn-success w-100" id="downloadBtn">
+                                                    <i class="bi bi-download"></i>
+                                                    Descargar
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Barra de progreso (oculta inicialmente) -->
+                                        <div class="mt-3 d-none" id="progressContainer">
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <small class="text-muted">Descargando...</small>
+                                                <small class="text-muted" id="progressText">0%</small>
+                                            </div>
+                                            <div class="progress">
+                                                <div class="progress-bar progress-bar-striped progress-bar-animated"
+                                                    role="progressbar" style="width: 0%" id="progressBar">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS local -->
+    <script src="scripts/bootstrap.bundle.min.js"></script>
+    <!-- Script personalizado -->
+    <script src="scripts/renderer.js"></script>
+</body>
+
+</html>

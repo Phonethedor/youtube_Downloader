@@ -1,0 +1,146 @@
+/* Estilos base */
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    min-height: 100vh;
+    overflow-x: hidden; /* Evita scroll horizontal */
+}
+
+body {
+    background: #4e4f4f;
+    background: linear-gradient(35deg, rgba(78, 79, 79, 1) 0%, rgba(0, 235, 252, 1) 50%, rgba(4, 36, 125, 1) 100%);
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+/* Estilos de card principal */
+.card {
+    max-width: 500px;
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.95);
+    border: none;
+    border-radius: 15px;
+}
+
+.card-header {
+    border-radius: 15px 15px 0 0 !important;
+    border-bottom: 1px solid rgba(0,0,0,0.125);
+}
+
+/* Card del video */
+.card .card {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(0,0,0,0.125);
+    border-radius: 10px;
+}
+
+/* Media queries para resolución 1024x768 */
+@media (max-width: 1024px) {
+    .card {
+        max-width: 450px;
+        margin: 20px;
+    }
+}
+
+@media (max-height: 768px) {
+    .min-vh-100 {
+        min-height: 100vh;
+        padding: 20px 0;
+    }
+    
+    .card {
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+}
+
+/* Estilos de botones */
+.btn-primary {
+    background: linear-gradient(45deg, #007bff, #0056b3);
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
+}
+
+.btn-success {
+    background: linear-gradient(45deg, #28a745, #20c997);
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+}
+
+/* Estilos de formularios */
+.form-control:focus,
+.form-select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Estilos de progreso */
+.progress-bar {
+    background: linear-gradient(45deg, #28a745, #20c997);
+}
+
+/* Animaciones */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* Estilos responsivos adicionales */
+@media (max-width: 576px) {
+    .col-md-8 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+    
+    .card {
+        margin: 10px;
+        max-width: calc(100% - 20px);
+    }
+    
+    .row.g-2 {
+        --bs-gutter-x: 0.5rem;
+    }
+}
+
+/* Thumbnail del video */
+#videoThumbnail {
+    object-fit: cover;
+    border-radius: 10px 0 0 10px;
+}
+
+/* Mejoras visuales para iconos */
+.bi {
+    margin-right: 0.5rem;
+}
+
+/* Estados de carga */
+.loading {
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+.loading .btn {
+    cursor: not-allowed;
+}
