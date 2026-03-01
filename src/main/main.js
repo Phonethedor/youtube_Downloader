@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain, dialog, shell, Menu } = require('electron')
 const path = require('path');
 const youtubedl = require('youtube-dl-exec');
 const fs = require('fs');
+const { generate } = require('youtube-po-token-generator');
 
 let mainWindow;
 
@@ -90,12 +91,16 @@ ipcMain.handle('get-video-info', async (event, url) => {
             throw new Error('URL de YouTube no válida');
         }
 
-        console.log('📡 Obteniendo información del video...');
+        console.log('📡 Generando PO Token y obteniendo información del video...');
+        // Generar poToken y visitorData para evadir el bloqueo 403 / restricción a 360p de YouTube
+        const { visitorData, poToken } = await generate();
+        const extractorArgs = `youtube:player-client=web,default;visitor_data=${visitorData};po_token=web+${poToken}`;
+
         const info = await youtubedl(url, {
             dumpSingleJson: true,
             noWarnings: true,
             noCheckCertificate: true,
-            extractorArgs: 'youtube:player_client=tv,android'
+            extractorArgs: extractorArgs
         });
 
         console.log('📹 Video encontrado:', info.title);
@@ -225,11 +230,15 @@ ipcMain.handle('download-video', async (event, url, quality, outputPath) => {
         if (!outputPath) throw new Error('Debe seleccionar una carpeta de destino');
         if (!quality) throw new Error('Debe seleccionar una calidad');
 
+        console.log('📡 Generando PO Token para la descarga...');
+        const { visitorData, poToken } = await generate();
+        const extractorArgs = `youtube:player-client=web,default;visitor_data=${visitorData};po_token=web+${poToken}`;
+
         console.log('📡 Obteniendo título del video...');
         const info = await youtubedl(url, {
             dumpSingleJson: true,
             noWarnings: true,
-            extractorArgs: 'youtube:player_client=tv,android'
+            extractorArgs: extractorArgs
         });
 
         // Limpiamos el título para que Windows lo permita como nombre de archivo
@@ -258,7 +267,7 @@ ipcMain.handle('download-video', async (event, url, quality, outputPath) => {
         const ytDlpOptions = {
             noWarnings: true,
             noCheckCertificate: true,
-            extractorArgs: 'youtube:player_client=tv,android',
+            extractorArgs: extractorArgs,
             format: formatStr,
             output: outputFile
         };
