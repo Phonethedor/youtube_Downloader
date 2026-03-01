@@ -3,6 +3,39 @@ const path = require('path');
 const youtubedl = require('youtube-dl-exec');
 const fs = require('fs');
 const ffmpeg = require('ffmpeg-static');
+const { exec } = require('child_process');
+
+let cachedToken = null;
+let tokenGenerationTime = null;
+
+// Funci├│n para obtener el PoToken sin bloquear el hilo principal de Electron
+async function getPoToken() {
+    if (cachedToken && tokenGenerationTime && (Date.now() - tokenGenerationTime < 3600000)) {
+        return cachedToken;
+    }
+
+    return new Promise((resolve) => {
+        console.log('≡ƒôí Generando PoToken en proceso aislado...');
+        // Usamos un proceso externo para que el consumo de memoria (JSDOM) no afecte a Electron
+        const cmd = 'node -e "require(\'youtube-po-token-generator\').generate().then(t=>console.log(JSON.stringify(t))).catch(e=>process.exit(1))"';
+
+        exec(cmd, { cwd: __dirname }, (error, stdout) => {
+            if (error) {
+                console.error('Γ¥î Error en generador externo:', error.message);
+                resolve({ visitorData: '', poToken: '' });
+                return;
+            }
+            try {
+                const data = JSON.parse(stdout);
+                cachedToken = data;
+                tokenGenerationTime = Date.now();
+                resolve(data);
+            } catch (e) {
+                resolve({ visitorData: '', poToken: '' });
+            }
+        });
+    });
+}
 
 
 let mainWindow;
@@ -94,7 +127,13 @@ ipcMain.handle('get-video-info', async (event, url) => {
 
         console.log('Obteniendo información del video...');
 
-        const extractorArgs = 'youtube:player-client=ios,android,web';
+        const { visitorData, poToken } = await getPoToken();
+
+        // Estrategia combinada: PoToken + fallback para formatos ocultos
+        let extractorArgs = 'youtube:player-client=ios,android,web;formats=missing_pot';
+        if (poToken) {
+            extractorArgs += `;visitor_data=${visitorData};po_token=web+${poToken}`;
+        }
 
         const info = await youtubedl(url, {
             dumpSingleJson: true,
@@ -230,7 +269,11 @@ ipcMain.handle('download-video', async (event, url, quality, outputPath) => {
         if (!outputPath) throw new Error('Debe seleccionar una carpeta de destino');
         if (!quality) throw new Error('Debe seleccionar una calidad');
 
-        const extractorArgs = 'youtube:player-client=ios,android,web';
+        const { visitorData, poToken } = await getPoToken();
+        let extractorArgs = 'youtube:player-client=ios,android,web;formats=missing_pot';
+        if (poToken) {
+            extractorArgs += `;visitor_data=${visitorData};po_token=web+${poToken}`;
+        }
 
         console.log('Obteniendo título del video...');
         const info = await youtubedl(url, {
