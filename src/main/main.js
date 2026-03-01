@@ -2,41 +2,6 @@ const { app, BrowserWindow, ipcMain, dialog, shell, Menu } = require('electron')
 const path = require('path');
 const youtubedl = require('youtube-dl-exec');
 const fs = require('fs');
-const ffmpeg = require('ffmpeg-static');
-const { exec } = require('child_process');
-
-let cachedToken = null;
-let tokenGenerationTime = null;
-
-// Funci├│n para obtener el PoToken sin bloquear el hilo principal de Electron
-async function getPoToken() {
-    if (cachedToken && tokenGenerationTime && (Date.now() - tokenGenerationTime < 3600000)) {
-        return cachedToken;
-    }
-
-    return new Promise((resolve) => {
-        console.log('≡ƒôí Generando PoToken en proceso aislado...');
-        // Usamos un proceso externo para que el consumo de memoria (JSDOM) no afecte a Electron
-        const cmd = 'node -e "require(\'youtube-po-token-generator\').generate().then(t=>console.log(JSON.stringify(t))).catch(e=>process.exit(1))"';
-
-        exec(cmd, { cwd: __dirname }, (error, stdout) => {
-            if (error) {
-                console.error('Γ¥î Error en generador externo:', error.message);
-                resolve({ visitorData: '', poToken: '' });
-                return;
-            }
-            try {
-                const data = JSON.parse(stdout);
-                cachedToken = data;
-                tokenGenerationTime = Date.now();
-                resolve(data);
-            } catch (e) {
-                resolve({ visitorData: '', poToken: '' });
-            }
-        });
-    });
-}
-
 
 let mainWindow;
 
@@ -125,21 +90,12 @@ ipcMain.handle('get-video-info', async (event, url) => {
             throw new Error('URL de YouTube no válida');
         }
 
-        console.log('Obteniendo información del video...');
-
-        const { visitorData, poToken } = await getPoToken();
-
-        // Estrategia combinada: PoToken + fallback para formatos ocultos
-        let extractorArgs = 'youtube:player-client=ios,android,web;formats=missing_pot';
-        if (poToken) {
-            extractorArgs += `;visitor_data=${visitorData};po_token=web+${poToken}`;
-        }
-
+        console.log('📡 Obteniendo información del video...');
         const info = await youtubedl(url, {
             dumpSingleJson: true,
             noWarnings: true,
             noCheckCertificate: true,
-            extractorArgs: extractorArgs
+            extractorArgs: 'youtube:player_client=tv,android'
         });
 
         console.log('📹 Video encontrado:', info.title);
@@ -269,17 +225,11 @@ ipcMain.handle('download-video', async (event, url, quality, outputPath) => {
         if (!outputPath) throw new Error('Debe seleccionar una carpeta de destino');
         if (!quality) throw new Error('Debe seleccionar una calidad');
 
-        const { visitorData, poToken } = await getPoToken();
-        let extractorArgs = 'youtube:player-client=ios,android,web;formats=missing_pot';
-        if (poToken) {
-            extractorArgs += `;visitor_data=${visitorData};po_token=web+${poToken}`;
-        }
-
-        console.log('Obteniendo título del video...');
+        console.log('📡 Obteniendo título del video...');
         const info = await youtubedl(url, {
             dumpSingleJson: true,
             noWarnings: true,
-            extractorArgs: extractorArgs
+            extractorArgs: 'youtube:player_client=tv,android'
         });
 
         // Limpiamos el título para que Windows lo permita como nombre de archivo
@@ -293,9 +243,9 @@ ipcMain.handle('download-video', async (event, url, quality, outputPath) => {
             console.log('🎵 Formato seleccionado: Solo audio (MP3)');
         } else {
             const height = quality.replace('p', '');
-            // Priorizamos la mejor calidad de video y audio por separado para que FFmpeg los una.
-            // Esto es CRUCIAL para obtener más de 360p en YouTube actualmente.
-            formatStr = `bestvideo[height<=${height}][ext=mp4]+bestaudio[ext=m4a]/best[height<=${height}]/best`;
+            // yt-dlp selector: intentará descargar el video igual o menor a tu altura 
+            // y mezclarlo con el audio en un contenedor mp4.
+            formatStr = `bestvideo[height<=${height}]+bestaudio/best[height<=${height}]/best`;
             ext = 'mp4';
             console.log(`📹 Formato seleccionado: Video máximo ${height}p + mejor audio`);
         }
@@ -308,10 +258,9 @@ ipcMain.handle('download-video', async (event, url, quality, outputPath) => {
         const ytDlpOptions = {
             noWarnings: true,
             noCheckCertificate: true,
-            extractorArgs: extractorArgs,
+            extractorArgs: 'youtube:player_client=tv,android',
             format: formatStr,
-            output: outputFile,
-            ffmpegLocation: ffmpeg
+            output: outputFile
         };
 
         if (quality === 'audio') {
