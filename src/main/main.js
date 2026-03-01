@@ -2,7 +2,8 @@ const { app, BrowserWindow, ipcMain, dialog, shell, Menu } = require('electron')
 const path = require('path');
 const youtubedl = require('youtube-dl-exec');
 const fs = require('fs');
-const { generate } = require('youtube-po-token-generator');
+const ffmpeg = require('ffmpeg-static');
+
 
 let mainWindow;
 
@@ -91,10 +92,9 @@ ipcMain.handle('get-video-info', async (event, url) => {
             throw new Error('URL de YouTube no válida');
         }
 
-        console.log('📡 Generando PO Token y obteniendo información del video...');
-        // Generar poToken y visitorData para evadir el bloqueo 403 / restricción a 360p de YouTube
-        const { visitorData, poToken } = await generate();
-        const extractorArgs = `youtube:player-client=web,default;visitor_data=${visitorData};po_token=web+${poToken}`;
+        console.log('Obteniendo información del video...');
+
+        const extractorArgs = 'youtube:player-client=ios,android,web';
 
         const info = await youtubedl(url, {
             dumpSingleJson: true,
@@ -230,11 +230,9 @@ ipcMain.handle('download-video', async (event, url, quality, outputPath) => {
         if (!outputPath) throw new Error('Debe seleccionar una carpeta de destino');
         if (!quality) throw new Error('Debe seleccionar una calidad');
 
-        console.log('📡 Generando PO Token para la descarga...');
-        const { visitorData, poToken } = await generate();
-        const extractorArgs = `youtube:player-client=web,default;visitor_data=${visitorData};po_token=web+${poToken}`;
+        const extractorArgs = 'youtube:player-client=ios,android,web';
 
-        console.log('📡 Obteniendo título del video...');
+        console.log('Obteniendo título del video...');
         const info = await youtubedl(url, {
             dumpSingleJson: true,
             noWarnings: true,
@@ -252,9 +250,9 @@ ipcMain.handle('download-video', async (event, url, quality, outputPath) => {
             console.log('🎵 Formato seleccionado: Solo audio (MP3)');
         } else {
             const height = quality.replace('p', '');
-            // yt-dlp selector: intentará descargar el video igual o menor a tu altura 
-            // y mezclarlo con el audio en un contenedor mp4.
-            formatStr = `bestvideo[height<=${height}]+bestaudio/best[height<=${height}]/best`;
+            // Priorizamos la mejor calidad de video y audio por separado para que FFmpeg los una.
+            // Esto es CRUCIAL para obtener más de 360p en YouTube actualmente.
+            formatStr = `bestvideo[height<=${height}][ext=mp4]+bestaudio[ext=m4a]/best[height<=${height}]/best`;
             ext = 'mp4';
             console.log(`📹 Formato seleccionado: Video máximo ${height}p + mejor audio`);
         }
@@ -269,7 +267,8 @@ ipcMain.handle('download-video', async (event, url, quality, outputPath) => {
             noCheckCertificate: true,
             extractorArgs: extractorArgs,
             format: formatStr,
-            output: outputFile
+            output: outputFile,
+            ffmpegLocation: ffmpeg
         };
 
         if (quality === 'audio') {
